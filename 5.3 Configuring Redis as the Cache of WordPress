@@ -1,0 +1,156 @@
+Step 1 Preconfigure Redis.
+If Redis in the preceding lab is reused, delete all configurations.
+
+ئەگەر هی پیشوو تیا مابوو ئام ائەکەیت
+
+redis-cli -a "Huawei@123"
+  flushall
+
+rm -rf /var/lib/redis/*
+
+
+Modify the configuration file (line 75) so that Redis can be accessed over the network.
+bind 192.168.1.9
+
+After the configuration is complete, restart the server and check whether the
+configuration takes effect.
+ss -lnp | grep redis
+
+
+Step 2 Interconnect NGINX with PHP.
+On WordPress, run the yum install -y php command to install PHP and its dependencies.
+After the installation is complete, add listen = 9000 under listen.allowed_clients =
+127.0.0.1 in the /etc/php-fpm.d/www.conf file, as shown in the following figure.
+
+Run the systemctl restart php-fpm command to restart PHP and check whether port
+9000 is enabled.
+
+ss -lnp | grep 9000
+
+Create a wordpress.conf file in the /etc/nginx/conf.d directory of WordPress. The file
+content is as follows:
+
+
+server {
+ listen 0.0.0.0:80;
+ root /data/WordPress;
+ #server_name localhost;
+ index index.php;
+ location ~ \.php$ {
+ fastcgi_pass 127.0.0.1:9000;
+ fastcgi_index index.php;
+ fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+ include fastcgi_params;
+ }
+}
+
+
+Create a directory /data/WordPress, create a test file index.php in this directory, and
+add the following contents to the file:
+
+<?php
+phpinfo();
+?>
+
+
+Restart the NGINX service and access the PHP page in the client browser to check
+whether the page can be displayed.
+
+
+
+Step 3 Interconnect PHP with MySQL.
+This lab uses user root for testing. Check whether user root has the required permissions,
+as shown in the following figure.
+
+
+user mysql:
+
+select host from over where user = 'root';
+If user root is not allowed to access all other hosts or the WordPress host, complete the
+configuration by referring to the MySQL section.
+
+After checking the permissions of user root, run the following commands on the
+WordPress host to install and connect to the MySQL server:
+yum install –y mysql
+mysql -h'192.168.1.8' -uroot -p'Huawei@123'
+
+
+After the login is successful, run the following command on WordPress to install the PHP
+driver for MySQL:
+
+yum install -y php-mysqlnd
+
+
+
+After the installation is complete, create a conn_mysql.php file in the /data/WordPress
+directory and enter the following content in the file:
+
+
+<?php
+$con = mysqli_connect("192.168.1.8","root","Huawei@123");
+if ($con)
+ echo 'OK';
+else
+ echo 'NOT OK';
+$con->close();
+?>
+
+After the configuration is complete, check whether OK is returned, as shown in the
+following figure.
+
+
+Step 4 Prepare WordPress resources.
+Download WordPress and create a database by following the instructions in "Preparing
+Resources" in course 1.
+
+
+Step 5 Install WordPress.
+Install and test WordPress by following the instructions in "Installing and Testing
+WordPress" in course 1.
+
+Step 6 Install a Redis plugin.
+Add the following content to the end of the WordPress configuration file wp-config:
+define("FS_METHOD", "direct");
+define("FS_CHMOD_DIR", 0777);
+define("FS_CHMOD_FILE", 0777);
+
+Run the following command to modify the permission on the WordPress directory:
+
+chmod -R 777 WordPress
+
+Log in to WordPress and click Plugins > Add New.
+
+On the displayed page, enter Redis Object Cache in the search box and click Install Now
+in the search result, as shown in the following figure.
+
+After the installation is complete, add the Redis configuration information to the
+WordPress configuration file wp-config.php. The details are as follows:
+define( 'WP_REDIS_HOST', '192.168.1.9' );
+define( 'WP_REDIS_PORT', 6379 );
+define( 'WP_REDIS_PASSWORD', 'Huawei@123' );
+define( 'WP_REDIS_TIMEOUT', 1 );
+define( 'WP_REDIS_READ_TIMEOUT', 1 );
+define( 'WP_REDIS_DATABASE', 0 );
+
+Click Activate and then check the plugin status in Installed Plugins.
+
+
+click on setting of plugin
+If the following information in displayed, the plugin is running properly.
+
+Step 7 Query WordPress data stored in Redis.
+Log in to the Redis host. In the WordPress configuration, the generated data is stored in
+database 0. Therefore, you can run the keys * command to query the generated cache
+data.
+
+
+
+
+
+
+
+
+
+
+
+
