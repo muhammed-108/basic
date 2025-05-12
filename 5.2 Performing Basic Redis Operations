@@ -1,0 +1,73 @@
+Step 1 Install Redis on an ECS.
+Run the following command to install Redis:
+yum install -y redis6-6.2.7-1.oe2203.x86_64
+
+After the installation is complete, run the systemctl start redis command to start the
+Redis service.
+
+step 2 
+redis-cli
+Create data in key-value format.
+  set test1 openEuler1
+  set test2 openEuler2
+  set test3 openEuler3
+
+Query all keys in the current database.
+  keys *
+
+Run the get command to view the value of a key. For example:
+get test1
+
+Run the expire command to set the expiration time of a key. For example:
+expire test1 2
+
+Run the move command to migrate a key value to another database. For example:
+move test2 1
+1 
+select 1 
+
+keys *
+
+
+Step 3 Set a Redis login password.
+Modify the Redis configuration file /etc/redis/redis.conf. Uncomment requirepass
+foobared (line 903 in the current version) and replace foobared with a password, as
+shown in the following figure.
+requirepass Huawei@123
+
+After the modification, restart the Redis service and check whether the password takes
+effect.
+
+redis-cli
+dway ama ish nakat abe password bnusi lagalia
+redis-cli -a Huawei@123
+inja ish akat
+
+Step 4 Configure Redis persistent storage.
+Modify the Redis configuration file, set dbfilename to snapshot.rdb, and set dir to a
+directory that stores this file, as shown in the following figure.
+
+dbfilename snapshot.rdb
+
+dir /var/lib/redis
+
+Run the save command to set the RDB policy. In the following figure, 10 indicates that a
+snapshot is saved if one key changes within 10 seconds (line 386 in the configuration
+file).
+
+save 10 1
+
+
+
+After the modification is complete, restart the Redis service, go to Redis, and manually
+create two keys. The system creates a snapshot file in the specified directory, as shown in
+the following figure.
+
+ls /var/lib/redis/
+
+
+
+
+
+
+
